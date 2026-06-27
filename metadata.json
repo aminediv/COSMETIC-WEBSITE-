@@ -1,0 +1,6 @@
+{
+  "name": "L'Essence Botanique",
+  "description": "A premium luxury organic Moroccan skincare e-commerce application, featuring elegant layouts, product collections, botanical ingredients, interactive cart and checkout flows.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
