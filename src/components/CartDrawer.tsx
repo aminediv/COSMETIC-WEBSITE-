@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'motion/react';
 import { X, ShoppingBag, Trash2, Plus, Minus, ArrowRight } from 'lucide-react';
 import { CartItem, Product } from '../types';
 import { products } from '../data';
+import { locales } from '../locales';
+import { formatPrice } from '../utils/price';
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -12,6 +14,8 @@ interface CartDrawerProps {
   onRemoveItem: (productId: string) => void;
   onCheckout: () => void;
   onAddToCart: (product: Product) => void;
+  language: 'en' | 'fr';
+  currency?: 'MAD' | 'EUR';
 }
 
 export default function CartDrawer({
@@ -22,7 +26,12 @@ export default function CartDrawer({
   onRemoveItem,
   onCheckout,
   onAddToCart,
+  language,
+  currency = 'MAD',
 }: CartDrawerProps) {
+  const t = locales[language].cart;
+  const thome = locales[language].home;
+  const tcheckout = locales[language].checkout;
   // Simple calculation
   const subtotal = cartItems.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
   const isFreeShipping = subtotal >= 75;
@@ -30,7 +39,6 @@ export default function CartDrawer({
   const total = subtotal + shippingCharge;
 
   // Addon recommendation: filter items not currently in the cart
-  const addonProduct = products.find((p) => !cartItems.some((item) => item.product.id === p.id)) || products[4];
 
   return (
     <AnimatePresence>
@@ -55,10 +63,10 @@ export default function CartDrawer({
             id="cart-drawer"
           >
             {/* Header */}
-            <div className="p-6 border-b border-cream-300/30 flex justify-between items-center bg-pure-white">
+            <div className="p-6 border-b border-cream-300/30 flex justify-between items-center bg-white">
               <div className="flex items-center gap-2.5">
                 <ShoppingBag className="w-5 h-5 text-sage-800" />
-                <h2 className="font-serif text-xl font-bold text-charcoal">Your Botanical Bag</h2>
+                <h2 className="font-serif text-xl font-bold text-charcoal">{t.title}</h2>
                 <span className="font-sans text-xs bg-sage-800/10 text-sage-800 font-bold px-2 py-0.5 rounded-full">
                   {cartItems.reduce((acc, item) => acc + item.quantity, 0)}
                 </span>
@@ -77,10 +85,10 @@ export default function CartDrawer({
             <div className="px-6 py-4 bg-sage-50 border-b border-cream-200">
               <p className="font-sans text-xs text-sage-800 leading-relaxed">
                 {isFreeShipping ? (
-                  <span className="font-semibold">Congratulations! Your order qualifies for Free Botanical Shipping.</span>
+                  <span className="font-semibold">{language === 'en' ? 'Congratulations! Your order qualifies for Free Botanical Shipping.' : 'Félicitations ! Votre commande bénéficie de la livraison offerte.'}</span>
                 ) : (
                   <span>
-                    Add <span className="font-bold">${(75 - subtotal).toFixed(2)}</span> more to unlock free shipping.
+                    {language === 'en' ? 'Add' : 'Ajoutez'} <span className="font-bold">{formatPrice(75 - subtotal, currency, language)}</span> {language === 'en' ? 'more to unlock free shipping.' : 'pour bénéficier de la livraison gratuite.'}
                   </span>
                 )}
               </p>
@@ -93,21 +101,21 @@ export default function CartDrawer({
             </div>
 
             {/* Scrollable Cart Items */}
-            <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto overscroll-contain px-6 py-4 space-y-4 custom-scrollbar">
               {cartItems.length === 0 ? (
                 <div className="py-20 text-center flex flex-col items-center justify-center space-y-4">
                   <div className="w-16 h-16 rounded-full bg-cream-100 flex items-center justify-center text-sage-800 mb-2">
                     <ShoppingBag className="w-8 h-8 opacity-40" />
                   </div>
-                  <h3 className="font-serif text-xl text-charcoal">Your Bag is Empty</h3>
+                  <h3 className="font-serif text-xl text-charcoal">{t.empty}</h3>
                   <p className="font-sans text-xs text-muted-gray max-w-xs mx-auto leading-relaxed">
-                    Begin your restorative ritual by adding some of our organic cold-pressed Moroccan formulations.
+                    {language === 'en' ? 'Begin your restorative ritual by adding some of our organic cold-pressed Moroccan formulations.' : 'Commencez votre rituel réparateur en ajoutant certaines de nos formulations marocaines bio pressées à froid.'}
                   </p>
                   <button
                     onClick={onClose}
                     className="bg-sage-800 text-warm-white font-sans text-xs font-semibold tracking-widest uppercase px-6 py-3.5 rounded-full hover:scale-105 transition-transform"
                   >
-                    Continue Exploring
+                    {t.explore}
                   </button>
                 </div>
               ) : (
@@ -116,12 +124,11 @@ export default function CartDrawer({
                   <div className="space-y-4">
                     {cartItems.map((item) => (
                       <motion.div
-                        layout
                         key={item.product.id}
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
-                        className="flex gap-4 p-4 rounded-2xl bg-pure-white border border-cream-300/25 shadow-sm relative group"
+                        className="flex gap-4 p-4 rounded-2xl bg-white border border-cream-300/25 shadow-sm relative group"
                       >
                         {/* Image */}
                         <div className="w-20 h-20 rounded-xl overflow-hidden bg-cream-100 shrink-0">
@@ -136,16 +143,16 @@ export default function CartDrawer({
                         <div className="flex-1 min-w-0 flex flex-col justify-between">
                           <div>
                             <h4 className="font-serif text-base text-charcoal truncate">
-                              {item.product.name}
+                              {language === 'en' ? item.product.name : (item.product.nameFr || item.product.name)}
                             </h4>
                             <p className="font-sans text-[11px] text-muted-gray truncate italic">
-                              {item.product.subtitle}
+                              {language === 'en' ? item.product.subtitle : (item.product.subtitleFr || item.product.subtitle)}
                             </p>
                           </div>
 
                           <div className="flex justify-between items-center mt-2">
                             {/* Quantity buttons */}
-                            <div className="flex items-center border border-cream-200 bg-cream-100/50 rounded-full p-0.5">
+                            <div className="flex items-center border border-cream-200 bg-cream-100 rounded-full p-0.5">
                               <button
                                 onClick={() => onUpdateQuantity(item.product.id, Math.max(1, item.quantity - 1))}
                                 className="w-6 h-6 flex items-center justify-center text-muted-gray hover:text-charcoal"
@@ -166,7 +173,7 @@ export default function CartDrawer({
                             </div>
 
                             <span className="font-serif text-base text-sage-800 font-semibold">
-                              ${(item.product.price * item.quantity).toFixed(2)}
+                              {formatPrice(item.product.price * item.quantity, currency, language)}
                             </span>
                           </div>
                         </div>
@@ -174,68 +181,40 @@ export default function CartDrawer({
                         {/* Trash Button */}
                         <button
                           onClick={() => onRemoveItem(item.product.id)}
-                          className="absolute top-2 right-2 text-white/0 group-hover:text-red-400 p-1 bg-white/0 hover:bg-red-50 hover:rounded-full transition-all duration-300 focus:text-red-400 group-hover:opacity-100"
+                          className="absolute top-2 right-2 p-1 bg-transparent hover:bg-cream-100 text-muted-gray hover:text-red-400 rounded-full transition-all duration-300 opacity-0 group-hover:opacity-100 focus:opacity-100"
                           aria-label="Remove item"
                         >
-                          <Trash2 className="w-4 h-4 text-muted-gray hover:text-red-500" />
+                          <Trash2 className="w-4 h-4" />
                         </button>
                       </motion.div>
                     ))}
                   </div>
 
-                  {/* Complete Your Ritual Cross Sell addon */}
-                  {addonProduct && (
-                    <div className="mt-8 p-4 rounded-2xl bg-cream-100/50 border border-cream-300/20">
-                      <h4 className="font-sans text-[10px] font-bold tracking-widest uppercase text-sage-800 mb-3 flex items-center gap-1">
-                        Complete Your Ritual
-                      </h4>
-                      <div className="flex items-center gap-3">
-                        <img
-                          src={addonProduct.image}
-                          alt={addonProduct.name}
-                          className="w-12 h-12 rounded-lg object-cover bg-cream-100 shrink-0"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <h5 className="font-serif text-sm text-charcoal truncate">
-                            {addonProduct.name}
-                          </h5>
-                          <p className="font-sans text-[11px] text-sage-800 font-bold">
-                            ${addonProduct.price}
-                          </p>
-                        </div>
-                        <button
-                          onClick={() => onAddToCart(addonProduct)}
-                          className="bg-sage-800 text-warm-white text-[9px] font-bold tracking-widest uppercase px-3 py-1.5 rounded-full hover:bg-sage-600 transition-colors shrink-0"
-                        >
-                          Add +
-                        </button>
-                      </div>
-                    </div>
-                  )}
+
                 </>
               )}
             </div>
 
             {/* Bottom Panel Order Summary & Checkout */}
             {cartItems.length > 0 && (
-              <div className="p-6 bg-pure-white border-t border-cream-300/30 space-y-4">
+              <div className="p-6 bg-white border-t border-cream-300/30 space-y-4">
                 <div className="space-y-2 font-sans text-xs">
                   <div className="flex justify-between text-muted-gray">
-                    <span>Ritual Subtotal</span>
+                    <span>{t.subtotal}</span>
                     <span className="font-serif text-sm font-semibold text-charcoal">
-                      ${subtotal.toFixed(2)}
+                      {formatPrice(subtotal, currency, language)}
                     </span>
                   </div>
                   <div className="flex justify-between text-muted-gray">
-                    <span>Carbon-Neutral Shipping</span>
+                    <span>{language === 'en' ? 'Carbon-Neutral Shipping' : 'Livraison neutre en carbone'}</span>
                     <span className="font-serif text-sm font-semibold text-charcoal">
-                      {isFreeShipping ? 'Free' : `$${shippingCharge.toFixed(2)}`}
+                      {isFreeShipping ? tcheckout.free : formatPrice(shippingCharge, currency, language)}
                     </span>
                   </div>
                   <div className="flex justify-between text-charcoal pt-2 border-t border-cream-200">
-                    <span className="font-bold">Estimated Order Total</span>
+                    <span className="font-bold">{tcheckout.total}</span>
                     <span className="font-serif text-lg font-bold text-sage-800">
-                      ${total.toFixed(2)}
+                      {formatPrice(total, currency, language)}
                     </span>
                   </div>
                 </div>
@@ -245,7 +224,7 @@ export default function CartDrawer({
                   className="w-full bg-sage-800 hover:bg-sage-600 text-warm-white font-sans text-xs font-semibold tracking-widest uppercase py-4 rounded-full transition-all duration-300 hover:scale-[1.01] shadow-xl shadow-sage-800/10 flex items-center justify-center gap-2 mt-4"
                   id="checkout-button"
                 >
-                  Proceed to Secure Checkout <ArrowRight className="w-4 h-4" />
+                  {t.checkout} <ArrowRight className="w-4 h-4" />
                 </button>
               </div>
             )}

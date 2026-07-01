@@ -1,16 +1,22 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { SlidersHorizontal, Heart, ShoppingBag, Grid, List, Check, X, ArrowUpDown } from 'lucide-react';
+import { SlidersHorizontal, X, ArrowUpDown } from 'lucide-react';
 import { Product } from '../types';
 import { products } from '../data';
+import { locales } from '../locales';
+import ProductCard from './ProductCard';
+import BlurTitle from './BlurTitle';
+import { formatPrice } from '../utils/price';
 
 interface ShopViewProps {
   selectedCategory: string;
   setSelectedCategory: (cat: string) => void;
   onSelectProduct: (product: Product) => void;
   onAddToCart: (product: Product) => void;
-  onToggleFavorite: (product: Product) => void;
-  favorites: string[];
+  onToggleFavorite?: (product: Product) => void;
+  favorites?: string[];
+  language: 'en' | 'fr';
+  currency?: 'MAD' | 'EUR';
 }
 
 export default function ShopView({
@@ -19,8 +25,12 @@ export default function ShopView({
   onSelectProduct,
   onAddToCart,
   onToggleFavorite,
-  favorites,
+  favorites = [],
+  language,
+  currency = 'MAD',
 }: ShopViewProps) {
+  const t = locales[language].shop;
+  const thome = locales[language].home;
   const [selectedSkinType, setSelectedSkinType] = React.useState<string>('all');
   const [maxPrice, setMaxPrice] = React.useState<number>(150);
   const [sortBy, setSortBy] = React.useState<string>('recommended');
@@ -28,17 +38,17 @@ export default function ShopView({
 
   // Hardcode category labels
   const categories = [
-    { id: 'all', label: 'All Products' },
-    { id: 'facial-oils', label: 'Facial Care' },
-    { id: 'clays-masks', label: 'Clays & Masks' },
-    { id: 'body-ritual', label: 'Body Rituals' },
+    { id: 'all', label: t.all },
+    { id: 'facial-oils', label: language === 'en' ? 'Facial Oils' : 'Huiles Visage' },
+    { id: 'clays-masks', label: language === 'en' ? 'Clays & Masks' : 'Argiles & Masques' },
+    { id: 'body-ritual', label: language === 'en' ? 'Body Rituals' : 'Rituels Corps' },
   ];
 
   const skinTypes = [
-    { id: 'all', label: 'All Skin Types' },
-    { id: 'dry', label: 'Dry Skin' },
-    { id: 'oily-combination', label: 'Oily / Combination' },
-    { id: 'sensitive', label: 'Sensitive Skin' },
+    { id: 'all', label: t.allSkinTypes },
+    { id: 'dry', label: locales[language].account.skinType + ' - ' + (language === 'en' ? 'Dry' : 'Sèche') },
+    { id: 'oily-combination', label: locales[language].account.skinType + ' - ' + (language === 'en' ? 'Oily / Combination' : 'Grasse / Mixte') },
+    { id: 'sensitive', label: locales[language].account.skinType + ' - ' + (language === 'en' ? 'Sensitive' : 'Sensible') },
   ];
 
   // Filters logic
@@ -54,6 +64,16 @@ export default function ShopView({
     if (sortBy === 'price-low-high') return a.price - b.price;
     if (sortBy === 'price-high-low') return b.price - a.price;
     if (sortBy === 'rating') return b.rating - a.rating;
+    if (sortBy === 'alphabetical-a-z') {
+      const nameA = language === 'en' ? a.name : (a.nameFr || a.name);
+      const nameB = language === 'en' ? b.name : (b.nameFr || b.name);
+      return nameA.localeCompare(nameB);
+    }
+    if (sortBy === 'alphabetical-z-a') {
+      const nameA = language === 'en' ? a.name : (a.nameFr || a.name);
+      const nameB = language === 'en' ? b.name : (b.nameFr || b.name);
+      return nameB.localeCompare(nameA);
+    }
     // Default or 'recommended': best sellers first, then alphabetical
     return (b.isBestSeller ? 1 : 0) - (a.isBestSeller ? 1 : 0);
   });
@@ -73,27 +93,31 @@ export default function ShopView({
   return (
     <div className="w-full pt-28 pb-24 bg-warm-white">
       {/* 1. Header Hero Panel */}
-      <div className="max-w-7xl mx-auto px-6 md:px-12 mb-16 text-center">
+      <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-12 mb-16 text-center">
         <span className="font-sans text-[11px] font-semibold tracking-widest uppercase text-sage-800 mb-3 block">
           L'Essence Apothecary
         </span>
-        <h1 className="font-serif text-3xl md:text-5xl text-charcoal font-medium tracking-tight mb-4">
-          Botanical Collections
-        </h1>
+        <BlurTitle
+          text={t.title}
+          as="h1"
+          delay={0.1}
+          duration={1.0}
+          className="font-serif text-3xl md:text-5xl text-charcoal font-medium tracking-tight mb-4"
+        />
         <p className="font-sans text-xs md:text-sm text-muted-gray max-w-xl mx-auto leading-relaxed">
-          Nourishing formulas hand-crafted from cold-pressed argan nuts, steam-distilled blossoms, and ancient mountain minerals.
+          {t.desc}
         </p>
         <div className="w-12 h-[1px] bg-sage-800/35 mx-auto mt-8" />
       </div>
 
       {/* 2. Main Shop Grid with Sidebar Filters */}
-      <div className="max-w-7xl mx-auto px-6 md:px-12 grid grid-cols-1 lg:grid-cols-4 gap-12">
+      <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-12 grid grid-cols-1 lg:grid-cols-4 gap-12">
         {/* Left Sidebar Filters - Hidden on Mobile */}
         <div className="hidden lg:block lg:col-span-1 space-y-10">
           {/* Categories Filter */}
           <div>
             <h3 className="font-sans text-xs font-bold tracking-widest uppercase text-charcoal mb-5 pb-2 border-b border-cream-300/30">
-              Categories
+              {t.categories}
             </h3>
             <div className="space-y-3">
               {categories.map((cat) => (
@@ -118,7 +142,7 @@ export default function ShopView({
           {/* Skin Type Filter */}
           <div>
             <h3 className="font-sans text-xs font-bold tracking-widest uppercase text-charcoal mb-5 pb-2 border-b border-cream-300/30">
-              Skin Need
+              {t.skinType}
             </h3>
             <div className="space-y-3">
               {skinTypes.map((st) => (
@@ -143,7 +167,7 @@ export default function ShopView({
           {/* Price Range Filter */}
           <div>
             <h3 className="font-sans text-xs font-bold tracking-widest uppercase text-charcoal mb-5 pb-2 border-b border-cream-300/30">
-              Maximum Price
+              {language === 'en' ? 'Max Price' : 'Prix Max'}
             </h3>
             <div className="space-y-4">
               <input
@@ -156,9 +180,9 @@ export default function ShopView({
                 className="w-full accent-sage-800 h-1 bg-cream-200 rounded-lg appearance-none cursor-pointer"
               />
               <div className="flex justify-between font-sans text-xs text-muted-gray font-medium">
-                <span>$20</span>
-                <span className="text-sage-800 font-bold font-serif text-sm">${maxPrice}</span>
-                <span>$150</span>
+                <span>{formatPrice(20, currency, language)}</span>
+                <span className="text-sage-800 font-bold font-serif text-sm">{formatPrice(maxPrice, currency, language)}</span>
+                <span>{formatPrice(150, currency, language)}</span>
               </div>
             </div>
           </div>
@@ -169,7 +193,7 @@ export default function ShopView({
               onClick={clearFilters}
               className="w-full border border-sage-800/20 text-sage-800 hover:bg-sage-800/5 font-sans text-xs font-semibold tracking-widest uppercase py-3 rounded-full transition-all"
             >
-              Clear All Filters
+              {language === 'en' ? 'Reset' : 'Réinitialiser'}
             </button>
           )}
         </div>
@@ -184,26 +208,30 @@ export default function ShopView({
                 onClick={() => setIsMobileFiltersOpen(true)}
                 className="lg:hidden flex items-center gap-2 bg-cream-100 px-4 py-2.5 rounded-full text-charcoal hover:bg-cream-200 transition-colors"
               >
-                <SlidersHorizontal className="w-4 h-4" /> Filters
+                <SlidersHorizontal className="w-4 h-4" /> {t.filters}
               </button>
               <span className="font-sans text-xs tracking-wide text-muted-gray">
-                Showing {sortedProducts.length} luxurious formulas
+                {language === 'en' 
+                  ? `Showing ${sortedProducts.length} luxurious formulas`
+                  : `Affichage de ${sortedProducts.length} formules luxueuses`}
               </span>
             </div>
 
             {/* Right side: Sorting */}
             <div className="flex items-center space-x-2">
               <ArrowUpDown className="w-4 h-4 text-muted-gray" />
-              <span className="text-muted-gray hidden sm:inline">Sort by:</span>
+              <span className="text-muted-gray hidden sm:inline">{language === 'en' ? 'Sort by:' : 'Trier par :'}</span>
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
                 className="bg-cream-100 hover:bg-cream-200 text-charcoal font-sans text-xs font-semibold rounded-full px-4 py-2.5 focus:outline-none transition-colors cursor-pointer border-none"
               >
-                <option value="recommended">Recommended</option>
-                <option value="rating">Highest Rated</option>
-                <option value="price-low-high">Price: Low to High</option>
-                <option value="price-high-low">Price: High to Low</option>
+                <option value="recommended">{language === 'en' ? 'Recommended' : 'Recommandé'}</option>
+                <option value="rating">{language === 'en' ? 'Highest Rated' : 'Les Mieux Notés'}</option>
+                <option value="price-low-high">{language === 'en' ? 'Price: Low to High' : 'Prix : Croissant'}</option>
+                <option value="price-high-low">{language === 'en' ? 'Price: High to Low' : 'Prix : Décroissant'}</option>
+                <option value="alphabetical-a-z">{language === 'en' ? 'Alphabetical: A to Z' : 'Alphabétique : A à Z'}</option>
+                <option value="alphabetical-z-a">{language === 'en' ? 'Alphabetical: Z to A' : 'Alphabétique : Z à A'}</option>
               </select>
             </div>
           </div>
@@ -212,7 +240,7 @@ export default function ShopView({
           {(selectedCategory !== 'all' || selectedSkinType !== 'all' || maxPrice < 150) && (
             <div className="flex flex-wrap gap-2 mb-8 items-center">
               <span className="font-sans text-[11px] font-bold tracking-widest uppercase text-charcoal mr-2">
-                Active filters:
+                {language === 'en' ? 'Active filters:' : 'Filtres actifs :'}
               </span>
               {selectedCategory !== 'all' && (
                 <div className="flex items-center gap-1.5 bg-sage-800/10 text-sage-800 px-3 py-1.5 rounded-full text-[11px]">
@@ -232,7 +260,7 @@ export default function ShopView({
               )}
               {maxPrice < 150 && (
                 <div className="flex items-center gap-1.5 bg-sage-800/10 text-sage-800 px-3 py-1.5 rounded-full text-[11px]">
-                  <span>Under ${maxPrice}</span>
+                  <span>{language === 'en' ? `Under ${formatPrice(maxPrice, currency, language)}` : `Moins de ${formatPrice(maxPrice, currency, language)}`}</span>
                   <button onClick={() => setMaxPrice(150)} className="hover:opacity-80">
                     <X className="w-3 h-3" />
                   </button>
@@ -242,7 +270,7 @@ export default function ShopView({
                 onClick={clearFilters}
                 className="font-sans text-[11px] text-sage-800 underline font-semibold tracking-wider hover:opacity-80"
               >
-                Reset
+                {language === 'en' ? 'Reset' : 'Réinitialiser'}
               </button>
             </div>
           )}
@@ -252,105 +280,32 @@ export default function ShopView({
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="py-24 text-center glass-panel rounded-3xl p-12 max-w-md mx-auto"
+              className="py-16 lg:py-24 text-center glass-panel rounded-3xl p-12 max-w-md mx-auto"
             >
-              <h3 className="font-serif text-2xl text-charcoal mb-3">No Formulations Found</h3>
+              <h3 className="font-serif text-2xl text-charcoal mb-3">{language === 'en' ? 'No Formulations Found' : 'Aucun produit trouvé'}</h3>
               <p className="font-sans text-sm text-muted-gray mb-8">
-                We couldn't find any products matching your specific botanical filters. Try widening your price range or exploring other skin needs.
+                {t.noProducts}
               </p>
               <button
                 onClick={clearFilters}
                 className="bg-sage-800 text-warm-white font-sans text-xs font-semibold tracking-widest uppercase px-6 py-3.5 rounded-full"
               >
-                Reset All Filters
+                {language === 'en' ? 'Reset All Filters' : 'Réinitialiser tous les filtres'}
               </button>
             </motion.div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-8">
               <AnimatePresence mode="popLayout">
                 {sortedProducts.map((product) => (
-                  <motion.div
-                    layout
+                  <ProductCard
                     key={product.id}
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    transition={{ duration: 0.4 }}
-                    whileHover={{ y: -4 }}
-                    className="group bg-pure-white rounded-3xl border border-cream-300/10 shadow-md shadow-sage-800/[0.01] overflow-hidden flex flex-col p-4 hover:shadow-xl transition-all duration-400"
-                  >
-                    {/* Media Block */}
-                    <div
-                      className="aspect-square rounded-2xl bg-cream-100 relative overflow-hidden mb-5 cursor-pointer"
-                      onClick={() => handleProductClick(product)}
-                    >
-                      <img
-                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                        alt={product.name}
-                        src={product.image}
-                      />
-                      {product.isBestSeller && (
-                        <div className="absolute top-3 left-3 bg-sage-800 text-warm-white font-sans text-[9px] font-bold tracking-widest uppercase px-2.5 py-1 rounded-full">
-                          Best Seller
-                        </div>
-                      )}
-                      {product.isNew && (
-                        <div className="absolute top-3 left-3 bg-gold-accent text-charcoal font-sans text-[9px] font-bold tracking-widest uppercase px-2.5 py-1 rounded-full">
-                          New
-                        </div>
-                      )}
-
-                      {/* Heart Toggle */}
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onToggleFavorite(product);
-                        }}
-                        className="absolute top-3 right-3 w-8 h-8 rounded-full bg-pure-white/85 backdrop-blur-md flex items-center justify-center text-sage-800 hover:text-red-400 transition-colors shadow-sm z-10"
-                        aria-label="Add to favorites"
-                      >
-                        <Heart
-                          className={`w-4 h-4 ${
-                            favorites.includes(product.id) ? 'fill-red-400 text-red-400' : ''
-                          }`}
-                        />
-                      </button>
-
-                      {/* Hover Slide-up Quick Add Panel */}
-                      <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-charcoal/40 to-transparent translate-y-full group-hover:translate-y-0 transition-transform duration-300 flex justify-center">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onAddToCart(product);
-                          }}
-                          className="w-full bg-pure-white/95 backdrop-blur-md hover:bg-sage-800 hover:text-warm-white text-charcoal font-sans text-[10px] font-bold tracking-widest uppercase py-3 rounded-full transition-all shadow-md flex items-center justify-center gap-1.5"
-                        >
-                          <ShoppingBag className="w-3.5 h-3.5" /> Quick Ritual Add
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Metadata & Actions */}
-                    <div className="flex-grow flex flex-col justify-between">
-                      <div className="cursor-pointer" onClick={() => handleProductClick(product)}>
-                        <h3 className="font-serif text-xl text-charcoal group-hover:text-sage-800 transition-colors">
-                          {product.name}
-                        </h3>
-                        <p className="font-sans text-xs text-muted-gray mt-1">{product.subtitle}</p>
-                      </div>
-                      <div className="flex justify-between items-center mt-4 pt-3 border-t border-cream-100">
-                        <span className="font-serif text-xl text-sage-800 font-medium">
-                          ${product.price}
-                        </span>
-                        <button
-                          onClick={() => handleProductClick(product)}
-                          className="font-sans text-[10px] font-semibold tracking-widest uppercase text-sage-800 hover:text-sage-600 transition-colors"
-                        >
-                          Details →
-                        </button>
-                      </div>
-                    </div>
-                  </motion.div>
+                    product={product}
+                    onSelectProduct={onSelectProduct}
+                    onAddToCart={onAddToCart}
+                    language={language}
+                    currency={currency}
+                    layoutType="grid"
+                  />
                 ))}
               </AnimatePresence>
             </div>
@@ -377,11 +332,11 @@ export default function ShopView({
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-              className="fixed inset-y-0 right-0 w-80 bg-warm-white shadow-2xl z-[110] lg:hidden flex flex-col h-full p-6"
+              className="fixed inset-y-0 right-0 w-[85vw] max-w-[320px] bg-warm-white shadow-2xl z-[110] lg:hidden flex flex-col h-full p-6"
             >
               <div className="flex justify-between items-center pb-4 border-b border-cream-300/30">
                 <h2 className="font-sans text-xs font-bold tracking-widest uppercase text-charcoal">
-                  Filter Formulas
+                  {language === 'en' ? 'Filter Formulas' : 'Filtrer les Formules'}
                 </h2>
                 <button
                   onClick={() => setIsMobileFiltersOpen(false)}
@@ -396,7 +351,7 @@ export default function ShopView({
                 {/* Categories */}
                 <div>
                   <h3 className="font-sans text-xs font-bold tracking-widest uppercase text-charcoal mb-4">
-                    Category
+                    {t.categories}
                   </h3>
                   <div className="space-y-2">
                     {categories.map((cat) => (
@@ -416,7 +371,7 @@ export default function ShopView({
                 {/* Skin Need */}
                 <div>
                   <h3 className="font-sans text-xs font-bold tracking-widest uppercase text-charcoal mb-4">
-                    Skin Need
+                    {t.skinType}
                   </h3>
                   <div className="space-y-2">
                     {skinTypes.map((st) => (
@@ -436,7 +391,7 @@ export default function ShopView({
                 {/* Max Price */}
                 <div>
                   <h3 className="font-sans text-xs font-bold tracking-widest uppercase text-charcoal mb-4">
-                    Max Price
+                    {language === 'en' ? 'Max Price' : 'Prix Max'}
                   </h3>
                   <input
                     type="range"
@@ -448,9 +403,9 @@ export default function ShopView({
                     className="w-full accent-sage-800 mb-2 h-1 bg-cream-200 rounded-lg appearance-none cursor-pointer"
                   />
                   <div className="flex justify-between text-xs text-muted-gray">
-                    <span>$20</span>
-                    <span className="font-serif text-sm font-bold text-sage-800">${maxPrice}</span>
-                    <span>$150</span>
+                    <span>{formatPrice(20, currency, language)}</span>
+                    <span className="font-serif text-sm font-bold text-sage-800">{formatPrice(maxPrice, currency, language)}</span>
+                    <span>{formatPrice(150, currency, language)}</span>
                   </div>
                 </div>
               </div>
@@ -461,7 +416,7 @@ export default function ShopView({
                   onClick={() => setIsMobileFiltersOpen(false)}
                   className="w-full bg-sage-800 text-warm-white font-sans text-xs font-semibold tracking-widest uppercase py-3.5 rounded-full"
                 >
-                  Apply Filters
+                  {language === 'en' ? 'Apply Filters' : 'Appliquer les Filtres'}
                 </button>
               </div>
             </motion.div>

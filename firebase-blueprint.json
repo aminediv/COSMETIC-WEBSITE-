@@ -1,0 +1,56 @@
+{
+  "collections": {
+    "users": {
+      "description": "User profile information and settings",
+      "schema": {
+        "firstName": "string",
+        "lastName": "string",
+        "email": "string",
+        "skinType": "string",
+        "address": "string",
+        "tier": "string",
+        "memberSince": "string",
+        "phone": "string (optional)",
+        "city": "string (optional)"
+      },
+      "rules": {
+        "read": "request.auth != null && request.auth.uid == resource.id",
+        "write": "request.auth != null && request.auth.uid == resource.id"
+      }
+    },
+    "orders": {
+      "description": "User orders and delivery history",
+      "schema": {
+        "userId": "string (optional)",
+        "fullName": "string",
+        "phone": "string",
+        "address": "string",
+        "city": "string",
+        "items": "array",
+        "total": "number",
+        "currency": "string",
+        "status": "string",
+        "createdAt": "timestamp"
+      },
+      "rules": {
+        "read": "true",
+        "write": "true"
+      }
+    },
+    "contact_messages": {
+      "description": "Form submissions from contact page",
+      "schema": {
+        "name": "string",
+        "email": "string",
+        "consultation": "boolean",
+        "subject": "string",
+        "message": "string",
+        "createdAt": "timestamp"
+      },
+      "rules": {
+        "read": "false",
+        "write": "true"
+      }
+    }
+  }
+}

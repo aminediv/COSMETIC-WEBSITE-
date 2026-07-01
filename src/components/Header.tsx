@@ -1,6 +1,7 @@
 import React from 'react';
-import { Menu, X, Heart, ShoppingBag, Search, User } from 'lucide-react';
+import { Menu, X, ShoppingBag, Search, User } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { locales } from '../locales';
 
 interface HeaderProps {
   currentView: string;
@@ -8,8 +9,12 @@ interface HeaderProps {
   selectedCategory: string;
   setSelectedCategory: (cat: string) => void;
   cartCount: number;
-  favoritesCount: number;
   onOpenCart: () => void;
+  currentUser: any;
+  language: 'en' | 'fr';
+  setLanguage: (lang: 'en' | 'fr') => void;
+  currency: 'MAD' | 'EUR';
+  setCurrency: (curr: 'MAD' | 'EUR') => void;
 }
 
 export default function Header({
@@ -18,19 +23,21 @@ export default function Header({
   selectedCategory,
   setSelectedCategory,
   cartCount,
-  favoritesCount,
   onOpenCart,
+  currentUser,
+  language,
+  setLanguage,
+  currency,
+  setCurrency,
 }: HeaderProps) {
+  const t = locales[language];
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const [isSearchOpen, setIsSearchOpen] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState('');
 
   const navLinks = [
-    { label: 'Collections', view: 'shop', category: 'all' },
-    { label: 'Facial Care', view: 'shop', category: 'facial-oils' },
-    { label: 'Body Rituals', view: 'shop', category: 'body-ritual' },
-    { label: 'Our Story', view: 'about', category: '' },
-    { label: 'Stockists', view: 'contact', category: '' },
+    { label: t.nav.collections, view: 'shop', category: 'all' },
+    { label: t.nav.stockists, view: 'contact', category: '' },
   ];
 
   const handleNavClick = (view: string, category?: string) => {
@@ -40,6 +47,10 @@ export default function Header({
     setCurrentView(view);
     setIsMobileMenuOpen(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleAccountClick = () => {
+      handleNavClick('account');
   };
 
   const isLinkActive = (link: { view: string; category?: string }) => {
@@ -52,7 +63,7 @@ export default function Header({
   return (
     <>
       <header className="fixed top-[36px] left-0 w-full z-50 bg-warm-white/80 backdrop-blur-xl border-b border-cream-300/30 shadow-sm transition-all duration-300">
-        <div className="flex justify-between items-center w-full px-6 md:px-12 max-w-7xl mx-auto h-20 relative">
+        <div className="flex justify-between items-center w-full px-4 md:px-8 lg:px-12 max-w-7xl mx-auto h-20 relative">
           {/* Mobile Menu Toggle */}
           <button
             onClick={() => setIsMobileMenuOpen(true)}
@@ -126,32 +137,55 @@ export default function Header({
 
             {/* Action Buttons */}
             <div className="flex items-center space-x-3 md:space-x-4">
+              {/* Language Switcher */}
+              <div className="flex items-center space-x-1 font-sans text-[10px] font-bold tracking-widest uppercase">
+                <button
+                  onClick={() => setLanguage('en')}
+                  className={`transition-colors hover:text-sage-600 ${language === 'en' ? 'text-sage-800' : 'text-muted-gray'}`}
+                  aria-label="Switch to English"
+                >
+                  EN
+                </button>
+                <span className="text-muted-gray/50">|</span>
+                <button
+                  onClick={() => setLanguage('fr')}
+                  className={`transition-colors hover:text-sage-600 ${language === 'fr' ? 'text-sage-800' : 'text-muted-gray'}`}
+                  aria-label="Switch to French"
+                >
+                  FR
+                </button>
+              </div>
+
+              {/* Currency Switcher */}
+              <div className="flex items-center space-x-1 font-sans text-[10px] font-bold tracking-widest uppercase border-l border-cream-300/60 pl-3 md:pl-4">
+                <button
+                  onClick={() => setCurrency('MAD')}
+                  className={`transition-colors hover:text-sage-600 ${currency === 'MAD' ? 'text-sage-800 font-extrabold' : 'text-muted-gray'}`}
+                  aria-label="Switch to MAD"
+                >
+                  MAD
+                </button>
+                <span className="text-muted-gray/50">|</span>
+                <button
+                  onClick={() => setCurrency('EUR')}
+                  className={`transition-colors hover:text-sage-600 ${currency === 'EUR' ? 'text-sage-800 font-extrabold' : 'text-muted-gray'}`}
+                  aria-label="Switch to EUR"
+                >
+                  EUR
+                </button>
+              </div>
+
               {/* Account Profile link */}
               <button
-                onClick={() => handleNavClick('account')}
+                onClick={handleAccountClick}
                 className={`text-sage-800 hover:text-sage-600 transition-transform hover:scale-110 p-1 relative ${
                   currentView === 'account' ? 'text-sage-600' : ''
                 }`}
-                aria-label="Personal space"
+                aria-label={currentUser ? `Personal space (${currentUser.firstName})` : 'Personal space'}
               >
                 <User className="w-[19px] h-[19px]" />
-              </button>
-
-              {/* Favorites Wishlist */}
-              <button
-                onClick={() => handleNavClick('account')}
-                className="text-sage-800 hover:text-sage-600 transition-transform hover:scale-110 p-1 relative"
-                aria-label="Wishlist"
-              >
-                <Heart className="w-[19px] h-[19px]" />
-                {favoritesCount > 0 && (
-                  <motion.span
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    className="absolute -top-1.5 -right-1.5 bg-red-400 text-white font-sans text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center border border-warm-white"
-                  >
-                    {favoritesCount}
-                  </motion.span>
+                {currentUser && (
+                  <span className="absolute -top-0.5 -right-0.5 bg-sage-800 border border-warm-white w-2 h-2 rounded-full" />
                 )}
               </button>
 
@@ -166,7 +200,7 @@ export default function Header({
                   <motion.span
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
-                    className="absolute -top-1.5 -right-1.5 bg-sage-600 text-warm-white font-sans text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center border border-warm-white"
+                    className="absolute -top-1.5 -right-1.5 bg-sage-800 text-warm-white font-sans text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center border border-warm-white"
                   >
                     {cartCount}
                   </motion.span>
@@ -196,14 +230,14 @@ export default function Header({
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-              className="fixed inset-y-0 left-0 w-80 bg-warm-white shadow-2xl z-[70] md:hidden flex flex-col h-full"
+              className="fixed inset-y-0 left-0 w-[85vw] max-w-[320px] bg-warm-white shadow-2xl z-[70] md:hidden flex flex-col h-full"
               id="mobile-drawer"
             >
               <div className="p-6 border-b border-cream-300/30 flex justify-between items-center">
                 <div>
                   <h2 className="font-serif text-lg font-bold text-sage-800">L'Essence Botanique</h2>
                   <p className="font-sans text-[10px] tracking-wider uppercase text-muted-gray mt-0.5">
-                    Organic Moroccan Beauty
+                    {t.general.organicMoroccanBeauty}
                   </p>
                 </div>
                 <button
@@ -222,7 +256,7 @@ export default function Header({
                   onClick={() => handleNavClick('home')}
                   className="w-full text-left font-serif text-xl font-medium text-charcoal hover:text-sage-800 transition-colors py-2 block"
                 >
-                  Home Rituals
+                  {t.general.homeRituals}
                 </button>
                 <div className="border-b border-cream-300/20 my-2" />
                 
@@ -238,26 +272,62 @@ export default function Header({
                 
                 <div className="border-b border-cream-300/20 my-2" />
                 <button
-                  onClick={() => handleNavClick('faq')}
-                  className="w-full text-left font-sans text-sm font-semibold tracking-widest uppercase text-muted-gray hover:text-sage-800 transition-colors py-2 block"
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    handleAccountClick();
+                  }}
+                  className="w-full text-left font-sans text-sm font-semibold tracking-widest uppercase text-muted-gray hover:text-sage-800 transition-colors py-2 block cursor-pointer"
                 >
-                  Botanical FAQ
-                </button>
-                <button
-                  onClick={() => handleNavClick('account')}
-                  className="w-full text-left font-sans text-sm font-semibold tracking-widest uppercase text-muted-gray hover:text-sage-800 transition-colors py-2 block"
-                >
-                  My Profile
+                  {currentUser ? `${t.nav.profile} (${currentUser.firstName})` : t.nav.profile}
                 </button>
               </nav>
+
+              {/* Mobile Currency & Language Toggle inside drawer */}
+              <div className="flex items-center justify-between px-6 py-4 border-t border-cream-300/30 font-sans text-[11px] font-bold tracking-widest uppercase bg-cream-50/50">
+                <div className="flex items-center space-x-2">
+                  <span className="text-muted-gray text-[9px] font-semibold">{language === 'en' ? 'LANG:' : 'LANGUE :'}</span>
+                  <button
+                    onClick={() => setLanguage('en')}
+                    className={`transition-colors hover:text-sage-600 ${language === 'en' ? 'text-sage-800 underline underline-offset-4' : 'text-muted-gray'}`}
+                  >
+                    EN
+                  </button>
+                  <span className="text-muted-gray/30">|</span>
+                  <button
+                    onClick={() => setLanguage('fr')}
+                    className={`transition-colors hover:text-sage-600 ${language === 'fr' ? 'text-sage-800 underline underline-offset-4' : 'text-muted-gray'}`}
+                  >
+                    FR
+                  </button>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <span className="text-muted-gray text-[9px] font-semibold">{language === 'en' ? 'CURRENCY:' : 'DEVISE :'}</span>
+                  <button
+                    onClick={() => setCurrency('MAD')}
+                    className={`transition-colors hover:text-sage-600 ${currency === 'MAD' ? 'text-sage-800 underline underline-offset-4' : 'text-muted-gray'}`}
+                  >
+                    MAD
+                  </button>
+                  <span className="text-muted-gray/30">|</span>
+                  <button
+                    onClick={() => setCurrency('EUR')}
+                    className={`transition-colors hover:text-sage-600 ${currency === 'EUR' ? 'text-sage-800 underline underline-offset-4' : 'text-muted-gray'}`}
+                  >
+                    EUR
+                  </button>
+                </div>
+              </div>
 
               {/* Bottom login section */}
               <div className="p-6 border-t border-cream-300/30 bg-cream-100">
                 <button
-                  onClick={() => handleNavClick('account')}
-                  className="w-full bg-sage-800 text-warm-white text-xs font-semibold tracking-widest uppercase py-3.5 rounded-full hover:bg-sage-600 transition-colors duration-300 shadow-md shadow-sage-800/10"
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    handleAccountClick();
+                  }}
+                  className="w-full bg-sage-800 text-warm-white text-xs font-semibold tracking-widest uppercase py-3.5 rounded-full hover:bg-sage-600 transition-colors duration-300 shadow-md shadow-sage-800/10 cursor-pointer"
                 >
-                  Sign In / Register
+                  {currentUser ? t.nav.enterSanctuary : t.nav.signIn}
                 </button>
               </div>
             </motion.div>

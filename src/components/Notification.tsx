@@ -9,12 +9,18 @@ interface NotificationProps {
 }
 
 export default function Notification({ message, type, onClose }: NotificationProps) {
+  const onCloseRef = React.useRef(onClose);
+
+  React.useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
   React.useEffect(() => {
     const timer = setTimeout(() => {
-      onClose();
+      onCloseRef.current();
     }, 4000);
     return () => clearTimeout(timer);
-  }, [onClose]);
+  }, []);
 
   return (
     <motion.div
